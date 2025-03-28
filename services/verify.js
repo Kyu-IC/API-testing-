@@ -1,4 +1,4 @@
-// pages/api/verify.js
+//services/erify.js
 import jwt from 'jsonwebtoken';
 
 export default function handler(req, res) {

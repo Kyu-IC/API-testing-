@@ -1,4 +1,3 @@
-// pages/APITesting.js
 import { useState } from 'react';
 import axios from 'axios';
 
@@ -6,15 +5,17 @@ export default function APITesting() {
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
   const [token, setToken] = useState('');
-  const [targetUrl, setTargetUrl] = useState('');
+  const [targetUrl, setTargetUrl] = useState('http://localhost:3000/api/data'); // ตั้งค่าเริ่มต้น
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const requestToken = async () => {
     try {
       setLoading(true);
+
+      // เปลี่ยนจาก axios.post() เป็น axios.get() เพื่อรองรับ GET method
       const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_MY_AUTH_SERVICE}/api/token`,
+        `${process.env.NEXT_PUBLIC_MY_AUTH_SERVICE}/api/token`, 
         {
           params: {
             client_id: clientId,
@@ -23,9 +24,18 @@ export default function APITesting() {
         }
       );
 
-      setToken(res.data.token || res.data.access_token);
+      console.log('✅ Token received:', res.data);
+
+      const receivedToken = res.data.token || res.data.access_token;
+      if (!receivedToken) {
+        setResult({ success: false, message: 'No token received from API' });
+        return;
+      }
+
+      setToken(receivedToken);
       setResult({ success: true, message: 'Token received!' });
     } catch (err) {
+      console.error('❌ Token Error:', err);
       const msg =
         err.response?.data?.error ||
         err.response?.data?.message ||
@@ -38,19 +48,36 @@ export default function APITesting() {
   };
 
   const requestData = async () => {
+    if (!token || !token.trim()) {
+      setResult({ success: false, message: 'No valid token available' });
+      return;
+    }
+
     try {
       setLoading(true);
-      console.log('Sending token:', token);
+      console.log('📡 Sending request to:', targetUrl);
+      console.log('🔑 Using token:', token);
+
+      if (!token.trim()) {
+        console.error('❌ Invalid token: Token is empty or undefined');
+        setResult({ success: false, message: 'Invalid token' });
+        return;
+      }
+
       const res = await axios.get(targetUrl, {
         headers: {
           Authorization: `Bearer ${token.trim()}`,
         },
       });
+
+      console.log('✅ API Response:', res.data);
+
       setResult({
         success: true,
         message: JSON.stringify(res.data, null, 2),
       });
     } catch (err) {
+      console.error('❌ Data Request Error:', err);
       const msg =
         err.response?.data?.error ||
         err.response?.data?.message ||
@@ -98,15 +125,12 @@ export default function APITesting() {
           <input
             value={targetUrl}
             onChange={(e) => setTargetUrl(e.target.value)}
-            placeholder="http://localhost:3000/api/data"
             className="nes-input mb-3 w-full"
           />
           <button
             onClick={requestData}
             disabled={!targetUrl || !token}
-            className={`nes-btn w-full ${
-              !targetUrl || !token ? 'is-disabled' : 'is-primary'
-            }`}
+            className={`nes-btn w-full ${!targetUrl || !token ? 'is-disabled' : 'is-primary'}`}
           >
             Request Data
           </button>

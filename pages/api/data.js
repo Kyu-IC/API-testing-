@@ -2,37 +2,48 @@
 import { verifyToken } from '@/services/authServiceClient';
 
 export default async function handler(req, res) {
-  // กรณี CORS (ข้าม origin) ต้องตั้ง header ให้รองรับ (ถ้าจำเป็น)
+  // CORS Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
 
-  // Handle preflight request (OPTIONS) ถ้าจำเป็น
+  // Handle preflight request
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
+  if (req.method !== 'GET') {
+    return res.status(405).json({ success: false, message: "Method Not Allowed" });
+  }
+
   try {
     const authHeader = req.headers.authorization;
-    console.log('✅ Received Authorization Header:', authHeader);
+    
+    console.log('📩 Received Authorization Header:', authHeader);
 
-    // เช็คว่า header มี Bearer <token> ไหม
     if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Missing or invalid Authorization header' });
+      return res.status(401).json({ success: false, message: 'Missing or invalid Authorization header' });
     }
 
     const token = authHeader.split(' ')[1];
-    const result = await verifyToken(token); // เรียก /api/verify
+    console.log('🔑 Extracted Token:', token);
+
+    const result = await verifyToken(token);
 
     console.log('✅ Verify result:', result);
 
-    if (result.valid) {
-      return res.status(200).json({ success: true, data: 'you have done' });
-    } else {
-      return res.status(401).json({ error: result.error || 'Invalid token' });
+    if (!result.valid) {
+      return res.status(403).json({ success: false, message: 'Invalid or expired token' });
     }
+
+    // ✅ ส่ง JSON Response ตามที่โจทย์กำหนด
+    return res.status(200).json({
+      success: true,
+      data: "you have done"
+    });
+
   } catch (err) {
     console.error('❌ Internal Server Error:', err);
-    return res.status(500).json({ error: 'Internal Server Error', detail: err.message });
+    return res.status(500).json({ success: false, message: 'Internal Server Error', detail: err.message });
   }
 }
