@@ -2,8 +2,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import RegisterPopup from "../pages/components/RegisterPopup";
-import { getJWT } from '@/services/authClient';
-import { fetchFriendData } from '@/services/friendDataClient';
 
 export default function Home() {
   const [showPopup, setShowPopup] = useState(false);
@@ -28,31 +26,5 @@ export default function Home() {
   );
 }
 
-async function testAuth() {
-  const clientId = 'test_client';
-  const clientSecret = 'test_secret';
 
-  const token = await getJWT(clientId, clientSecret);
-  console.log('🔑 JWT Received:', token);
-}
-
-testAuth();
-
-async function testFetchFriendData() {
-  const clientId = 'test_client';
-  const clientSecret = 'test_secret';
-
-  const token = await getJWT(clientId, clientSecret);
-  if (!token) {
-    console.error('🚨 Failed to get JWT, cannot proceed.');
-    return;
-  }
-
-  console.log('🔑 JWT:', token);
-
-  const friendData = await fetchFriendData(token);
-  console.log('👥 Friend Data:', friendData);
-}
-
-testFetchFriendData();
 

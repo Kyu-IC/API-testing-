@@ -18,8 +18,8 @@ export default function APITesting() {
         `${process.env.NEXT_PUBLIC_MY_AUTH_SERVICE}/api/token`, 
         {
           params: {
-            client_id: clientId,
-            client_secret: clientSecret,
+            client_id: clientId || "test_client",
+            client_secret: clientSecret || "test_secret",
           },
         }
       );
